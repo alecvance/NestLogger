@@ -47,7 +47,8 @@ smtp = config['DEFAULT']['smtp']
 smtp_port = int(config['DEFAULT']['smtp_port'])
 
 # maximum relative humidity; greater than this will trigger an email if email is set.
-max_rh = int(config['DEFAULT']['max_rh'])
+default_max_rh = int(config['DEFAULT']['max_rh'])
+max_rh = default_max_rh
 
 #connect to the Nest API to get current status of each thermostat in account
 conn = http.client.HTTPSConnection("developer-api.nest.com")
@@ -75,6 +76,19 @@ for deviceID, thermostat in thermostats.items():
     device_name_long = thermostat['name_long']
     filename = device_name_long + ".log"
 
+    max_rh = default_max_rh
+    if config.has_option(device_name_long,'max_rh'):
+	    max_rh = int(config[device_name_long]['max_rh']) 
+	    #print("max_rh for " + device_name_long + " is " + format(max_rh))
+
+	    
+    if max_rh == 0:
+    	print("config error: max_rh not defined / too low for ".device_name_long)
+    	max_rh = default_max_rh
+
+
+    
+
     print (device_name_long +":")
 
     #print(deviceID, 'corresponds to', device_name_long)
@@ -93,25 +107,28 @@ for deviceID, thermostat in thermostats.items():
     with open(filename, "a") as f:
         f.write('{}\t{}\t{}\t{}\t{}\t{}\r'.format(timeStr,ambient_temperature_f,humidity,hvac_state,target_temperature_f,fan_timer_active))
 
-    messageText = "\n\r Humidity at {} is currently at {}%RH and {}F.\n\r System status is {} and target temp is " .format(device_name_long,humidity,ambient_temperature_f,hvac_state)
+    messageText = "\n\r  Status: \t{}F \t{}%RH \tState: {} \n\r  Target: \t" .format(ambient_temperature_f,humidity, hvac_state)
 
     if(hvac_mode == "heat-cool"):
         target_temperature_f = thermostat['target_temperature_high_f']
         #target temp is a range
-        messageText += "{}F-{}F. \n\r ".format(thermostat['target_temperature_low_f'],target_temperature_f)
+        messageText += "{}F-{}F".format(thermostat['target_temperature_low_f'],target_temperature_f)
     else:
-        messageText += "{}F. \n\r".format(target_temperature_f)
+        messageText += "{}F".format(target_temperature_f)
 
-    if (int(humidity) > max_rh) and ( hvac_state == "off"):
+    messageText +=  " \t{}%RH \n\r".format(max_rh)
 
-        messageText += ("# WARNING: Humidity at {} is above {}%RH. \n\r").format(device_name_long,max_rh)
+    if (hvac_state == "off"):
+	    if (int(humidity) > max_rh):
 
-        if(email):
-            email_alert(messageText)
-            print("sent email.")
+	        messageText += ("# WARNING: Humidity at {} is above {}%RH. \n\r").format(device_name_long,max_rh)
 
-    else:
-         messageText += "Humidity at {} is within range. ( <= {}%RH.) \n\r".format(device_name_long,max_rh)
+	        if(email):
+	            email_alert(messageText)
+	            print("sent email.")
+
+	    else:
+	         messageText += "Humidity at {} is within range. ( <= {}%RH.) \n\r".format(device_name_long,max_rh)
 
     print(messageText)
 

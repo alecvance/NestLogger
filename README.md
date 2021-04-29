@@ -1,4 +1,6 @@
-This script is a template to start working with the Nest API and log data from your thermostats. It can also optionally email you an alert when the relative humidity is above a certain amount.*
+This Python 3 (tested with 3.9.3) script is a template to start working with the Nest API and log data from your thermostats. It can also optionally email you an alert when the relative humidity is above a certain amount. (* See the last paragraph for explanation). 
+
+See my Nestools project on github if you would also like the script to control your Nest thermostat: https://github.com/alecvance/Nestools 
 
 It does not do any authentication; you will have to do that manually in order to get a token. 
 The steps are generally outlined below. For specifics, see the Nest Developer site.
