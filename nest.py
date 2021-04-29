@@ -10,22 +10,24 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-def email_alert(messageText):
-    s = smtplib.SMTP(host=smtp, port=smtp_port)
+def email_alert(subjectText, messageText):
 
-    msg = MIMEMultipart()       # create a message
-
-    # setup the parameters of the message
+    msg = MIMEMultipart()
     msg['From']=email
     msg['To']=email
-    msg['Subject']="NestLogger alert"
+    msg['Subject']="Nestlogger alert: "+ subjectText
 
     # add in the message body
     msg.attach(MIMEText(messageText, 'plain'))
 
-    # send the message via the server set up earlier.
-    s.send_message(msg)
+    # connect a server, login and send the mail
+   # s = smtplib.SMTP(host=smtp, port=smtp_port)
+    s = smtplib.SMTP_SSL("" + smtp + ":" + smtp_port)
 
+    #s.starttls()
+    s.login(email,password)
+    s.sendmail(email,email,msg.as_string())
+    s.quit()
     del msg
     return
 
@@ -42,13 +44,16 @@ token = config['DEFAULT']['token']
 #email to send alerts to
 email = config['DEFAULT']['email']
 
+#password for email
+password = config['DEFAULT']['password']
+
+
 #smtp (sendmail) configuration
 smtp = config['DEFAULT']['smtp']
-smtp_port = int(config['DEFAULT']['smtp_port'])
+smtp_port = config['DEFAULT']['smtp_port']
 
 # maximum relative humidity; greater than this will trigger an email if email is set.
 default_max_rh = int(config['DEFAULT']['max_rh'])
-max_rh = default_max_rh
 
 #connect to the Nest API to get current status of each thermostat in account
 conn = http.client.HTTPSConnection("developer-api.nest.com")
@@ -124,7 +129,7 @@ for deviceID, thermostat in thermostats.items():
 	        messageText += ("# WARNING: Humidity at {} is above {}%RH. \n\r").format(device_name_long,max_rh)
 
 	        if(email):
-	            email_alert(messageText)
+	            email_alert(device_name_long, messageText)
 	            print("sent email.")
 
 	    else:
