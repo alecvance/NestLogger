@@ -47,7 +47,6 @@ email = config['DEFAULT']['email']
 #password for email
 password = config['DEFAULT']['password']
 
-
 #smtp (sendmail) configuration
 smtp = config['DEFAULT']['smtp']
 smtp_port = config['DEFAULT']['smtp_port']
